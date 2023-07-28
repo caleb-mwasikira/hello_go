@@ -2,27 +2,27 @@ package main
 
 import (
 	"fmt"
-
-	"example.com/hello_go/calc"
 )
 
+/*
+Write a function to count the frequency of words in a string of text and return a map
+of words with their counts. The function should convert the text to lowercase, and
+punctuation should be trimmed from words. The strings package contains several help-
+ful functions for this task, including Fields, ToLower , and Trim .
+Use your function to count the frequency of words in the following passage and then
+display the count for any word that occurs more than once:
+
+The string is available in the `data/out_of_the_silent_planet.md` file
+*/
+
 func main() {
-	var numbers = []float64{1, 2, 3, 4, 5}
+	filename := "data/out_of_the_silent_planet.md"
+	word_count := freqOfWordsInFile(filename)
 
-	fmt.Printf("Array: %v\nAverage: %v\n", numbers, calc.Average(numbers...))
-	fmt.Printf("Std Deviation: %v\n", calc.StandardDeviation(numbers...))
-
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Println("panic occurred:", err)
+	for word, count := range word_count {
+		if count > 1 {
+			fmt.Printf("%v: %v\n", word, count)
 		}
-	}()
-
-	number := 5
-	iterative_fact := calc.IterativeFactorial(number)
-	recursive_fact := calc.RecursiveFactorial(number)
-
-	fmt.Printf("Iterative Factorial: %v! = %v\n", number, iterative_fact)
-	fmt.Printf("Recursive Factorial: %v! = %v\n", number, recursive_fact)
+	}
 	return
 }
