@@ -1,16 +1,28 @@
 package main
 
-import (
-	io "example.com/hello_go/io"
-)
+import "fmt"
+
+/*
+Write a function to count the frequency of words in a string of text and return a map
+of words with their counts. The function should convert the text to lowercase, and
+punctuation should be trimmed from words. The strings package contains several help-
+ful functions for this task, including Fields, ToLower , and Trim .
+Use your function to count the frequency of words in the following passage and then
+display the count for any word that occurs more than once:
+
+The string is available in the `data/out_of_the_silent_planet.md` file
+*/
 
 func main() {
-	filename := "./data/file.md"
-	new_filename := "./data/silent_planet.md"
-	config_file := "./data/test.conf"
+	filename := "data/out_of_the_silent_planet.md"
+	word_count := freqOfWordsInFile(filename)
 
-	io.ReadFileStats(filename)
-	io.ReadWholeFile(filename)
-	io.ReadByLine(new_filename)
-	io.ReadByWord(config_file)
+	for word, count := range word_count {
+		// only printing words that have appeared more than once
+		// to avoid extremely verbose output to stdout
+		if count > 1 {
+			fmt.Printf("%v: %v\n", word, count)
+		}
+	}
+
 }

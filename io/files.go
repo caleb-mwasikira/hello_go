@@ -8,8 +8,6 @@ import (
 )
 
 func ReadFileStats(filename string) {
-	defer fmt.Println("=========")
-
 	stats, err := os.Stat(filename)
 	if err != nil {
 
@@ -25,9 +23,6 @@ func ReadFileStats(filename string) {
 }
 
 func ReadWholeFile(filename string) {
-	fmt.Printf("Reading file %v as whole...\n", filename)
-	defer fmt.Println("=========")
-
 	buffer, err := os.ReadFile(filename)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -38,9 +33,6 @@ func ReadWholeFile(filename string) {
 }
 
 func ReadByLine(filename string) {
-	fmt.Printf("Reading file %v line by line...\n", filename)
-	defer fmt.Println("=========")
-
 	file, err := os.Open(filename)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -55,9 +47,6 @@ func ReadByLine(filename string) {
 }
 
 func ReadByWord(filename string) {
-	fmt.Printf("Reading file %v word by word...\n", filename)
-	defer fmt.Println("=========")
-
 	file, err := os.Open(filename)
 	if err != nil {
 		fmt.Println(err.Error())
