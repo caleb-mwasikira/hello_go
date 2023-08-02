@@ -2,27 +2,60 @@ package main
 
 import (
 	"fmt"
+	"log"
+
+	"example.com/hello_go/lib"
+	nasa "example.com/hello_go/nasa"
 )
 
-/*
-Write a function to count the frequency of words in a string of text and return a map
-of words with their counts. The function should convert the text to lowercase, and
-punctuation should be trimmed from words. The strings package contains several help-
-ful functions for this task, including Fields, ToLower , and Trim .
-Use your function to count the frequency of words in the following passage and then
-display the count for any word that occurs more than once:
-
-The string is available in the `data/out_of_the_silent_planet.md` file
-*/
-
 func main() {
-	filename := "data/out_of_the_silent_planet.md"
-	word_count := freqOfWordsInFile(filename)
+	var (
+		distance float64
+		err      error
+	)
 
-	for word, count := range word_count {
-		if count > 1 {
-			fmt.Printf("%v: %v\n", word, count)
-		}
+	filename := "data/mars_landing_sites.csv"
+
+	data, err := lib.ReadWholeCSVFile(filename)
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	landingSites, err := nasa.CreateLandingSites(data[1:]) // Skipping the csv header line
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// What are the closest and farthest distances between landing sites
+	mars := nasa.World{
+		Radius: 3389.5,
+	}
+	landingSiteDistances := nasa.CalcLandingSiteDistances(mars, landingSites)
+	nasa.CalcClosestLandingSites(landingSiteDistances)
+	nasa.CalcFarthestLandingSites(landingSiteDistances)
+
+	// Find the distance from London, England (51°30'N, 0°08'W) to Paris, France
+	// (48°51'N, 2°21'E).
+	earth := nasa.World{
+		Radius: 6371.0,
+	}
+
+	london := `(51°30'N, 0°08'W)`
+	paris := `(48°51'N, 2°21'E)`
+	distance, err = earth.DistanceBetweenTwoLocations(london, paris)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Distance from London to Paris is %v\n", distance)
+
+	// Find the distance between Mount Sharp (5°4'48"S, 137°51'E) and Olympus Mons
+	// (18°39'N, 226°12'E) on Mars.
+	mountSharp := `(5°4'48"S, 137°51'E)`
+	olympusMons := `(18°39'N, 226°12'E)`
+	distance, err = mars.DistanceBetweenTwoLocations(mountSharp, olympusMons)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Distance between Mount Sharp and Olympus Mons on Mars is %v\n", distance)
 	return
 }
