@@ -8,35 +8,37 @@ type World struct {
 	Radius float64
 }
 
-type Coordinate struct {
-	Latitude, Longitude float64
-}
-
 func degreesToRadians(deg float64) float64 {
 	return deg * math.Pi / 180
 }
 
-/* Distance calculation using the Spherical Law of Cosines. */
-func (w World) distanceBetweenTwoCoords(coord1, coord2 Coordinate) float64 {
-	s1, c1 := math.Sincos(degreesToRadians(coord1.Latitude))
-	s2, c2 := math.Sincos(degreesToRadians(coord2.Latitude))
+/*
+Calculates the distance between two locations
+using the Spherical Law of Cosines.
+*/
+func (w World) distanceBetweenTwoLocations(point1, point2 Location) float64 {
+	s1, c1 := math.Sincos(degreesToRadians(point1.Latitude))
+	s2, c2 := math.Sincos(degreesToRadians(point2.Latitude))
 
-	clong := math.Cos(degreesToRadians(coord1.Longitude - coord2.Longitude))
+	clong := math.Cos(degreesToRadians(point1.Longitude - point2.Longitude))
 	return w.Radius * math.Acos(s1*s2+c1*c2*clong)
 }
 
-/* Calculates the distance between two locations */
-func (w World) DistanceBetweenTwoLocations(fromLocation, toLocation string) (float64, error) {
-	fromCoord, err := parseCoordinatePair(fromLocation)
+/*
+Calculates the distance between two locations passed in
+as string values.
+*/
+func (w World) DistanceBetweenTwoLocationStrings(from, to string) (float64, error) {
+	_from, err := parseLocation(from)
 	if err != nil {
 		return 0, err
 	}
 
-	toCoord, err := parseCoordinatePair(toLocation)
+	_to, err := parseLocation(to)
 	if err != nil {
 		return 0, err
 	}
 
-	distance := w.distanceBetweenTwoCoords(*fromCoord, *toCoord)
+	distance := w.distanceBetweenTwoLocations(*_from, *_to)
 	return distance, nil
 }

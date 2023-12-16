@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"example.com/hello_go/lib"
 	nasa "example.com/hello_go/nasa"
 )
 
@@ -15,22 +14,21 @@ func main() {
 	)
 
 	filename := "data/mars_landing_sites.csv"
-
-	data, err := lib.ReadWholeCSVFile(filename)
+	landingSites, err := nasa.ReadLandingSitesFromFile(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	landingSites, err := nasa.CreateLandingSites(data[1:]) // Skipping the csv header line
-	if err != nil {
-		log.Fatal(err)
-	}
+	nasa.PrintLandingSites(landingSites)
+	fmt.Println()
 
 	// What are the closest and farthest distances between landing sites
 	mars := nasa.World{
 		Radius: 3389.5,
 	}
 	landingSiteDistances := nasa.CalcLandingSiteDistances(mars, landingSites)
+	nasa.PrintLandingSiteDistances(landingSiteDistances)
+	fmt.Println()
+
 	nasa.CalcClosestLandingSites(landingSiteDistances)
 	nasa.CalcFarthestLandingSites(landingSiteDistances)
 
@@ -42,7 +40,7 @@ func main() {
 
 	london := `(51°30'N, 0°08'W)`
 	paris := `(48°51'N, 2°21'E)`
-	distance, err = earth.DistanceBetweenTwoLocations(london, paris)
+	distance, err = earth.DistanceBetweenTwoLocationStrings(london, paris)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -52,7 +50,7 @@ func main() {
 	// (18°39'N, 226°12'E) on Mars.
 	mountSharp := `(5°4'48"S, 137°51'E)`
 	olympusMons := `(18°39'N, 226°12'E)`
-	distance, err = mars.DistanceBetweenTwoLocations(mountSharp, olympusMons)
+	distance, err = mars.DistanceBetweenTwoLocationStrings(mountSharp, olympusMons)
 	if err != nil {
 		log.Fatal(err)
 	}

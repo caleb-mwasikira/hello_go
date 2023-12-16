@@ -2,25 +2,32 @@ package nasa
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
+type DecimalLocation float64
+
+type Location struct {
+	Latitude  float64
+	Longitude float64
+}
+
 /*
-Coordinates can be represented as degrees° minutes' seconds"(DMS) format
-or in decimal form
+Locations can be represented as degrees° minutes' seconds"(DMS) format
 */
 
-type DMSCoordinate struct {
+type DMSLocation struct {
 	Degrees   float64
 	Minutes   float64
 	Seconds   float64
 	Direction string
 }
 
-/* Converts a DMS coordinate to its decimal equivalent */
-func (coord *DMSCoordinate) toDecimal() float64 {
+/* Converts a DMS Location to its decimal equivalent */
+func (coord *DMSLocation) toDecimal() float64 {
 	// Calculate the decimal degrees based on the DMS values
 	decimalDegrees := float64(coord.Degrees) + (float64(coord.Minutes) / 60) + (float64(coord.Seconds) / 3600)
 
@@ -33,13 +40,29 @@ func (coord *DMSCoordinate) toDecimal() float64 {
 }
 
 /*
-Takes in a coordinate string and checks if it is a valid
-degrees,minutes,seconds(DMS) coordinate
+Converts decimal Locations to degrees, minutes, seconds
+*/
+func decimaltoDMS(decimalCoord float64) *DMSLocation {
+	// Extract degrees
+	degrees := math.Floor(decimalCoord)
+
+	// Calculate minutes
+	minutesDecimal := (decimalCoord - degrees) * 60
+	minutes := math.Floor(minutesDecimal)
+
+	// Calculate seconds
+	seconds := (minutesDecimal - minutes) * 60
+	return &DMSLocation{Degrees: degrees, Minutes: minutes, Seconds: seconds}
+}
+
+/*
+Takes in a Location string and checks if it is in the
+degrees,minutes,seconds(DMS) format
 
 The regex used:
 
 		^: 						Start of the string
-	    [+-]?:					An optional plus or minus sign for positive or negative coordinates.
+	    [+-]?:					An optional plus or minus sign for positive or negative Locations.
 	    (\d{1,3}): 				Capturing group for 1 to 3 digits representing degrees.
 	    °?: 					An optional degree symbol.
 	    \s?: 					An optional space character to separate degrees from minutes.
@@ -65,97 +88,129 @@ Checks if a direction string is a valid compass direction (N, S, E, W)
 */
 func isCompassDirection(direction string) bool {
 	compassDirections := []string{"N", "S", "E", "W"}
-	compassDirectionsStr := strings.Join(compassDirections, "")
-	return strings.ContainsAny(strings.ToUpper(direction), compassDirectionsStr)
+	isCompass := false
+
+	for _, _direction := range compassDirections {
+		if _direction == strings.ToUpper(direction) {
+			isCompass = true
+			break
+		}
+	}
+
+	return isCompass
 }
 
 /*
-Takes in a coord string and converts it to its corresponding data type;
-If the coord string is in the degrees° minutes' seconds"(DMS) format
-then it is converted into a CoordinatesDMS struct
-
-If the coord string is in the decimal format, then it is converted
-into its decimal form
-
-For example:
-
-	parseCoordinate("135°54'0\" E")
-	Returns: CoordinatesDMS{Degrees=135 Minutes=54 Seconds=0 Direction=E}
-
-While:
-
-	parseCoordinate("135.90000")
-	Returns: 135.90000
+Converts a coord string into the degrees, minutes, seconds format
 */
-func parseCoordinate(coord string) (float64, error) {
-	if !isDMSCoord(coord) {
-		decimalCoord, err := strconv.ParseFloat(coord, 64)
-		if err != nil {
-			return 0, fmt.Errorf("Invalid coordinate format: %v", err)
-		}
-
-		return decimalCoord, nil
-	}
-
-	// Removes all DMS characters(°'") and replaces them with white space
+func coordToDMS(coord string) (*DMSLocation, error) {
 	replacer := strings.NewReplacer("°", " ", "'", " ", "\"", " ")
 	coord = replacer.Replace(strings.Trim(coord, " "))
 
-	// Splits the DMS coordinate string into its distinctive parts
 	parts := strings.Fields(coord)
-
-	// Create a new coordinate
-	DMSCoord := &DMSCoordinate{}
+	DMSCoord := &DMSLocation{}
 
 	for i, item := range parts {
-		lastIndex := i == len(parts)-1
+		isLastIndex := i == len(parts)-1
 
-		if !lastIndex {
+		if isLastIndex {
+			if isCompassDirection(item) {
+				DMSCoord.Direction = item
+			}
+		} else {
 			switch i {
 			case 0: // Degrees
 				val, err := strconv.ParseFloat(item, 64)
 				if err != nil {
-					return 0, err
+					return nil, err
 				}
 				DMSCoord.Degrees = val
 			case 1: // Minutes
 				val, err := strconv.ParseFloat(item, 64)
 				if err != nil {
-					return 0, err
+					return nil, err
 				}
 				DMSCoord.Minutes = val
 			default: // Seconds
 				val, err := strconv.ParseFloat(item, 64)
 				if err != nil {
-					return 0, err
+					return nil, err
 				}
 				DMSCoord.Seconds = val
-			}
-		} else {
-			if isCompassDirection(item) {
-				DMSCoord.Direction = item
 			}
 		}
 	}
 
-	return DMSCoord.toDecimal(), nil
+	return DMSCoord, nil
 }
 
-func parseCoordinatePair(coordPair string) (*Coordinate, error) {
-	coordPair = strings.Trim(coordPair, "()")
-	coordArr := strings.Split(coordPair, ",")
+/*
+Converts a coord string it to its decimal form
 
-	latitude, err := parseCoordinate(strings.Trim(coordArr[0], " "))
+For example:
+
+	coordToDecimal("135°54'0\" E")
+	Returns: 135.90000
+
+Or:
+
+	coordToDecimal("135.90000")
+	Returns: 135.90000
+*/
+func coordToDecimal(coord string) (float64, error) {
+	if isDMSCoord(coord) {
+		DMSCoord, err := coordToDMS(coord)
+		if err != nil {
+			return 0, err
+		}
+
+		return DMSCoord.toDecimal(), nil
+	}
+
+	decimalCoord, err := strconv.ParseFloat(coord, 64)
+	if err != nil {
+		return 0, fmt.Errorf("Invalid Location format: %v", err)
+	}
+
+	return decimalCoord, nil
+}
+
+/*
+Takes in a location string and converts it into its
+corresponding Location{} struct with latitude and longitude.
+
+For example:
+
+	london has the location `(51°30'N, 0°08'W)`
+		51°30'N -> latitude
+		0°08'W  -> longitude
+
+	This will be converted into a
+		Location{
+			Latitude: <>
+			Longitude: <>
+		}
+	struct
+*/
+func parseLocation(location string) (*Location, error) {
+	location = strings.Trim(location, "()")
+	latAndLong := strings.Split(location, ",")
+
+	_latitude := strings.Trim(latAndLong[0], " ")
+	_longitude := strings.Trim(latAndLong[1], " ")
+
+	latitude, err := coordToDecimal(_latitude)
 	if err != nil {
 		return nil, err
 	}
-	longitude, err := parseCoordinate(strings.Trim(coordArr[1], " "))
+
+	longitude, err := coordToDecimal(_longitude)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Coordinate{
+	return &Location{
 		Latitude:  latitude,
 		Longitude: longitude,
-	}, err
+	}, nil
 }
