@@ -3,6 +3,7 @@ package io
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"time"
 )
@@ -59,4 +60,28 @@ func ReadByWord(filename string) {
 	for scanner.Scan() {
 		fmt.Println(scanner.Text())
 	}
+}
+
+func CopyFile(source *os.File, dest io.Writer) error {
+	// make a buffer to keep chunks that are read
+	buffer := make([]byte, 1024)
+
+	for {
+		// read a chunk
+		n, err := source.Read(buffer)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		if n == 0 {
+			break
+		}
+
+		// write a chunk
+		_, err = dest.Write(buffer[:n])
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
