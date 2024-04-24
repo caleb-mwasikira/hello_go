@@ -7,12 +7,16 @@ import (
 )
 
 func main() {
-	src := "/home/netrunner/College"
+	// src := "/home/netrunner/College"
+	// err := my_io.ZipArchive(src, "")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// log.Println("done archiving files")
 
-	err := my_io.ZipArchive(src, "")
+	archive := "/home/netrunner/College.zip"
+	err := my_io.Unzip(archive)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	log.Println("done archiving files")
 }
