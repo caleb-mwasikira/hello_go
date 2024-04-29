@@ -1,22 +1,34 @@
 package main
 
 import (
-	"log"
-
-	my_io "example.com/hello_go/io"
+	"fmt"
+	"time"
 )
 
-func main() {
-	// src := "/home/netrunner/College"
-	// err := my_io.ZipArchive(src, "")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// log.Println("done archiving files")
+var balance int64
+var delay time.Duration = 100 * time.Millisecond
 
-	archive := "/home/netrunner/College.zip"
-	err := my_io.Unzip(archive)
-	if err != nil {
-		log.Fatal(err)
+func credit() {
+	for i := 0; i < 5; i++ {
+		balance += 100
+		time.Sleep(delay)
+		fmt.Println("After crediting, balance is ", balance)
 	}
+}
+
+func debit() {
+	for i := 0; i < 5; i++ {
+		balance -= 100
+		time.Sleep(delay)
+		fmt.Println("After debiting, balance is ", balance)
+	}
+}
+
+func main() {
+	balance = 200
+	fmt.Println("Initial balance is ", balance)
+
+	go credit()
+	go debit()
+	fmt.Scanln()
 }
