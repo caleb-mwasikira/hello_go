@@ -2,35 +2,24 @@ package main
 
 import (
 	"fmt"
-	"sync"
+	"sync/atomic"
 	"time"
 )
 
 var balance int64
 var delay time.Duration = 100 * time.Millisecond
-var mutex = &sync.Mutex{}
 
 func credit() {
 	for i := 0; i < 5; i++ {
-		mutex.Lock()
-
-		balance += 100
+		atomic.AddInt64(&balance, 100)
 		time.Sleep(delay)
-		fmt.Println("After crediting, balance is ", balance)
-
-		mutex.Unlock()
 	}
 }
 
 func debit() {
 	for i := 0; i < 5; i++ {
-		mutex.Lock()
-
-		balance -= 100
+		atomic.AddInt64(&balance, -100)
 		time.Sleep(delay)
-		fmt.Println("After debiting, balance is ", balance)
-
-		mutex.Unlock()
 	}
 }
 
@@ -41,4 +30,6 @@ func main() {
 	go credit()
 	go debit()
 	fmt.Scanln()
+
+	fmt.Println("final balance is ", balance)
 }
