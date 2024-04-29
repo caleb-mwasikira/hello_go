@@ -3,55 +3,31 @@ package main
 import (
 	"fmt"
 	"sync"
-	"time"
 )
 
-var balance int64
-var delay time.Duration = 100 * time.Millisecond
-var mutex = &sync.Mutex{}
-
-func credit(wg *sync.WaitGroup) {
+// --- send data into a channel ---
+func sendData(ch chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
-
-	for i := 0; i < 5; i++ {
-		mutex.Lock()
-
-		balance += 100
-		time.Sleep(delay)
-		fmt.Println("After crediting, balance is", balance)
-
-		mutex.Unlock()
-	}
+	ch <- "Hello World"
+	fmt.Println("data sent into channel")
 }
 
-func debit(wg *sync.WaitGroup) {
+// -- retrieve data from a channel ---
+func getData(ch chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
-
-	for i := 0; i < 5; i++ {
-		mutex.Lock()
-
-		balance -= 100
-		time.Sleep(delay)
-		fmt.Println("After debiting, balance is", balance)
-
-		mutex.Unlock()
-	}
+	fmt.Printf("goroutine x says %v\n", <-ch)
 }
 
 func main() {
-	balance = 200
+	// create channel
+	ch := make(chan string)
 	wg := sync.WaitGroup{}
 
-	fmt.Println("Initial balance is ", balance)
+	wg.Add(1)
+	go sendData(ch, &wg)
 
 	wg.Add(1)
-	go credit(&wg)
+	go getData(ch, &wg)
 
-	wg.Add(1)
-	go debit(&wg)
-
-	// block until the WaitGroup counter is 0
-	wg.Wait()
-
-	fmt.Println("final balance is ", balance)
+	wg.Wait() // block until the WaitGroup goroutine counter equals 0
 }
