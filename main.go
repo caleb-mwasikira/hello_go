@@ -4,62 +4,75 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
-func genRandomArray(size int) []int {
-	nums := []int{}
-
-	for i := 0; i < size; i++ {
-		randNum := rand.Intn(10)
-		nums = append(nums, randNum)
-	}
-
-	return nums
+type DownloadResult struct {
+	url     string
+	success bool
 }
 
-func calcSumOfArray(nums []int) int {
-	total := 0
-	for _, value := range nums {
-		total += value
-	}
-	return total
+func downloadFile(url string) bool {
+	fmt.Printf("downloading file %v...\n", url)
+
+	// simulate doing some work for n seconds
+	time.Sleep(5 * time.Second)
+
+	result := rand.Float32() < 0.5
+	return result
 }
 
 func main() {
 	var (
-		seq_total  int   = 0
-		conc_total int64 = 0
+		start    time.Time
+		duration time.Duration
 	)
 
-	nums := genRandomArray(1000000)
-
-	start := time.Now()
-	seq_total = calcSumOfArray(nums)
-	duration := time.Since(start)
-
-	fmt.Printf("sequential total: %v \t in %v\n", seq_total, duration)
-
-	// concurrent soln
-	start = time.Now()
-	offset := 10000
-	wg := sync.WaitGroup{}
-
-	for i := 0; i < len(nums); i += offset {
-		begin := i
-		end := i + offset
-		smaller_arr := nums[begin:end]
-
-		wg.Add(1)
-		go func(smaller_arr []int) {
-			defer wg.Done()
-			small_total := calcSumOfArray(smaller_arr)
-			atomic.AddInt64(&conc_total, int64(small_total))
-		}(smaller_arr)
+	urls := []string{
+		"https://wikipedia.org",
+		"https://www.google.com",
+		"https://www.w3schools.com",
 	}
-	wg.Wait()
-	duration = time.Since(start)
 
-	fmt.Printf("concurrent total: %v \t in %v\n", conc_total, duration)
+	// // sequential downloading of files
+	// start = time.Now()
+	// for _, url := range urls {
+	// 	downloadFile(url)
+	// 	fmt.Println()
+	// }
+	// duration = time.Since(start)
+	// fmt.Printf("sequential downloading files took %v\n", duration)
+
+	wg := sync.WaitGroup{}
+	start = time.Now()
+	res_chan := make(chan DownloadResult)
+
+	for _, url := range urls {
+		wg.Add(1)
+		go func(url string) {
+			defer wg.Done()
+
+			result := downloadFile(url)
+			res_chan <- DownloadResult{
+				url:     url,
+				success: result,
+			}
+		}(url)
+	}
+
+	go func() {
+		wg.Wait()
+		close(res_chan)
+	}()
+
+	for result := range res_chan {
+		if result.success {
+			fmt.Printf("download %v successful\n", result.url)
+		} else {
+			fmt.Printf("download %v failed\n", result.url)
+		}
+	}
+
+	duration = time.Since(start)
+	fmt.Printf("concurrent downloading files took %v\n", duration)
 }
